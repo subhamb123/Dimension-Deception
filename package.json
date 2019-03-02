@@ -1,0 +1,20 @@
+{
+  "name": "dimensiondeception",
+  "version": "1.0.0",
+  "description": "A multiplayer game built for CodeDay Winter 2019",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Twangybeast/Dimension-Deception.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Twangybeast/Dimension-Deception/issues"
+  },
+  "homepage": "https://github.com/Twangybeast/Dimension-Deception#readme"
+}
