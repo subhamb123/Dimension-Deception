@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Twangybeast/Dimension-Deception/issues"
   },
-  "homepage": "https://github.com/Twangybeast/Dimension-Deception#readme"
+  "homepage": "https://github.com/Twangybeast/Dimension-Deception#readme",
+  "dependencies": {
+    "socket.io": "^2.2.0"
+  }
 }
