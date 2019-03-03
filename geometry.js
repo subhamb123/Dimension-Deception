@@ -9,6 +9,7 @@ module.exports = {
     },
     perpendicularLine: function(line) {
         let res = {x: (2 * line.x + line.dx)/2, y: (2 * line.y + line.dy)/2, dx: -line.dy, dy: line.dx};
+        return res;
     },
     lineCollidesCircle: function(point, circleRad, line) {
         let perp = this.perpendicularLine(line);
