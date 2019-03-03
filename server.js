@@ -16,8 +16,8 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: []};
-
+let gamestate = {players: {}, bullets: [], ticks: 0};
+const PHYSICS = require('./physics');
 
 
 
@@ -42,13 +42,18 @@ io.on('connection', function(socket){
 const SLEEP_TIME = 15;
 function mainLoop(timeUsed = 0) {
 	let t = Date.now();
+	//Game logic, check if bullet intersects
+	PHYSICS.bulletsHit(gamestate);
+
+
 	io.emit('update', {
-		msg: 'broadcast'
+		gamestate: gamestate
 	});
 	t = Date.now() - t;
 	setTimeout(function() {
 		mainLoop(t);
 	}, SLEEP_TIME - timeUsed);
+	gamestate.ticks++;
 }
 
 mainLoop();
