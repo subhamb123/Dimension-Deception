@@ -23,7 +23,7 @@ function  dotGridGradient(ix, iy, x, y, Gradient) {
 }
 
 // Compute Perlin noise at coordinates x, y
-function perlin(x, y, Gradient) {
+exports.perlin = function (x, y, Gradient) {
 
     // Determine grid cell coordinates
     let x0 = Math.floor(x);
@@ -49,7 +49,7 @@ function perlin(x, y, Gradient) {
     return value;
 }
 
-function generateRandomGradient(x, y) {
+module.exports.generateRandomGradient= function (x, y) {
     let Gradient = [];
     for (let i = 0; i < y; i++) {
         let row = [];

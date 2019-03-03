@@ -24,6 +24,9 @@ module.exports = {
                 if (playerHit.health < 0) {playerHit.health = 0;}
                 delete gamestate.bullets[i];
                 i--;
+            } else {
+                bullet.x += bullet.vx;
+                bullet.y += bullet.vy;
             }
         }
     }
