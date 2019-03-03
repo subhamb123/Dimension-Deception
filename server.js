@@ -13,6 +13,43 @@ server.listen(port, () => {
 // Routing
 app.use(express.static(path.join(__dirname, "client")));
 
+let users = {};
+
+const GAMESTATE = require('./gamestate.js');
+let gamestate = {players: {}, bullets: []};
+
+
+
+
 io.on('connection', function(socket){
 	console.log('a user connected');
+	users[socket.id] = socket;
+	socket.on("disconnect", function() {
+		delete users[socket.id];
+	});
+	socket.on('addplayer', function(data){
+		gamestate.players[socket.id] = GAMESTATE.createPlayer(data.name);
+	});
+	socket.on('playermove', function(data) {
+		gamestate.players[socket.id] = data.player;
+	});
+	socket.on('playershoot', function(data){
+		gamestate.bullets.push(data.bullet);
+	})
+
 });
+
+const SLEEP_TIME = 15;
+function mainLoop(timeUsed = 0) {
+	let t = Date.now();
+	io.emit('update', {
+		msg: 'broadcast'
+	});
+	t = Date.now() - t;
+	setTimeout(function() {
+		mainLoop(t);
+	}, SLEEP_TIME - timeUsed);
+}
+
+mainLoop();
+
