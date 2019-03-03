@@ -52,11 +52,14 @@ io.on("connection", function(socket) {
 	});
 	socket.on("playermove", function(data) {
 		if (gamestate.players.hasOwnProperty(socket.id)) {
+			let health = gamestate.players[socket.id].health;
+			data.player.health = health;
 			gamestate.players[socket.id] = data.player;
 		}
 	});
 	socket.on("playershoot", function(bullet) {
 		bullet.damage = 5;
+		bullet.player = socket.id;
 		gamestate.bullets[bullet.id] = bullet;
 	})
 

@@ -38,6 +38,7 @@ let levelMaxTileY = 1000;
 let userLevel = 0;
 let userTileX = Math.random() * levelMaxTileX;
 let userTileY = Math.random() * levelMaxTileY;
+let myHealth = 100;
 
 let userSpeed = 10;
 const BULLET_SPEED = 20;
@@ -389,6 +390,7 @@ function gameLoop(delta) {
 
 	for (let i = 0; i < otherPlayers.data.length; i++) {
 		if (otherPlayers.data[i].name === NAME) {
+            myHealth = otherPlayers.data[i].health;
 			app.stage.removeChild(otherPlayers.sprites[i]);
 		} else {
 			otherPlayers.data[i].x += otherPlayers.data[i].dx;
@@ -413,8 +415,7 @@ function gameLoop(delta) {
 			y: userTileY,
 			dx: 0,
 			dy: 0,
-			name: NAME,
-			health: 100
+			name: NAME
 		}
 	});
 
