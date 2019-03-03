@@ -16,6 +16,6 @@ html, body {
 	background: #222;
 	color: #eee;
 	z-index: 10;
-	font-size: 50px;
-	font-family: "Open Sans", sans-serif;
+	font-size: 40px;
+	font-family: monospace;
 }
