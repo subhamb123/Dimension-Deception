@@ -159,7 +159,8 @@ app.renderer.plugins.interaction.on("mousedown", event => {
 		y: userTileY,
 		vx: (point.x - app.renderer.width / 2) / hypotenuse * BULLET_SPEED,
         vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED,
-        id: Math.random() * 20000
+        id: Math.random() * 20000,
+        level: userLevel
 	};
     makeBullet(bullet);
 	socket.emit("playershoot", bullet);
@@ -458,7 +459,7 @@ function gameLoop(delta) {
 	for (let portal of Object.values(gamestate.portals)) {
 		portal.x = (portal.tileX - userTileX) + app.renderer.width / 2;
         portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
-        portal.visible = portal.level === userLevel;
+        portal.visible = portal.level === userLevel ? true : false;
 	}
 	for (let tree of gamestate.trees) {
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;

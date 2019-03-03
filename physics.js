@@ -13,6 +13,7 @@ module.exports = {
                     if (gamestate.players.hasOwnProperty(prop)) {
                         if (prop == bullet.player) {continue;}
                         let player = gamestate.players[prop];
+                        if (player.level < bullet.level) {continue;}
                         if (geometry.lineCollidesCircle(player, PLAYER_RADIUS, line)) {
                             //wacky physics, assumes closest player is the first one hit
                             let d = Math.hypot(player.x - bullet.x, player.y - bullet.y);
