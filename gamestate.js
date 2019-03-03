@@ -20,5 +20,15 @@ module.exports = {
                 }
             }
         }
+    },
+    removePortals: function(portals, lifetime) {
+        for (let prop in portals) {
+            if (portals.hasOwnProperty(prop)) {
+                let portal = portals[prop];
+                if (Date.now() - portal.start > lifetime) {
+                    delete portals[prop];
+                }
+            }
+        }
     }
 }
