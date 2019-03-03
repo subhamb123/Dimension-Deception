@@ -16,22 +16,29 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: [], obstacles: [], items: [], ticks: 0};
+let gamestate = {players: {}, bullets: [], items: [], ticks: 0};
 const PHYSICS = require('./physics');
+let terrain = {};
 
 //generate world
 const GENERATOR = require('./procedural gen/obstaclesgen');
 (function(obstacles){
-	let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
-	for (const rock of rocks) {
-		rock.name = 'rock';
+
+	//let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
+	//obstacles.rocks = rocks;
+
+	let trees = GENERATOR.generateWithHeight(1000, 1000, 0.01, 5);
+	for (let tree of trees) {
+		tree.h = Math.random() + 0.5;
 	}
-	obstacles.push(...rocks);
-})(gamestate.obstacles);
+	obstacles.trees = trees;
+})(terrain);
 
 io.on('connection', function(socket) {
 	users[socket.id] = socket;
 	console.log("Connect! Num users: " + Object.keys(users).length);
+	socket.emit('terrain', terrain);
+	console.log(terrain);
 
 	socket.on("disconnect", function() {
 		delete users[socket.id];
@@ -41,7 +48,7 @@ io.on('connection', function(socket) {
 		gamestate.players[socket.id] = GAMESTATE.createPlayer(data.name);
 	});
 	socket.on('playermove', function(data) {
-		console.log(data.player);
+		//console.log(data.player);
 		gamestate.players[socket.id] = data.player;
 	});
 	socket.on('playershoot', function(bullet){

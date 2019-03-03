@@ -69,7 +69,8 @@ let gameState = {
 	players: [],
 	portals: [],
 	bullets: [],
-	trees: createRandomTrees(3),
+    //trees: createRandomTrees(3),
+    trees: [],
 	rocks: []
 };
 
@@ -175,6 +176,24 @@ function createRandomTrees(n) {
 	}
 	return trees;
 }
+socket.on('terrain', function(data) {
+    console.log(data);
+    for (let tree of data.trees) {
+        const circle = new PIXI.Graphics();
+		const OUTLINE_WIDTH = 20;
+		const RADIUS = (tree.h) * TILE_SIZE;
+		circle.lineStyle(OUTLINE_WIDTH, 0x17B530, 1);
+		circle.beginFill(0x21D53D);
+		circle.drawCircle(0, 0, RADIUS);
+		circle.endFill();
+		circle.tileX = tree.x;
+		circle.tileY = tree.y;
+		circle.radius = RADIUS;
+
+		stage.addChild(circle);
+		gameState.trees.push(circle);
+    }
+});
 
 function makePortal() {
 	const circle = new PIXI.Graphics();
@@ -257,11 +276,9 @@ function fixPos(pos, vector, userRadius, originalPos) {
                             tangent.dy *= -1;
                         }
                         limitMag(tangent, userSpeed);
-                        console.log(newPos);
                         newPos.x += tangent.dx;
                         newPos.y += tangent.dy;
-                        console.log(tangent);
-                        fixPos(newPos, tangent, userRadius, originalPos)
+                        //fixPos(newPos, tangent, userRadius, originalPos)
                         console.log('"fixing position"');
                     }
                 }
@@ -295,6 +312,11 @@ function gameLoop(delta) {
         userTileX = newPos.x;
         userTileY = newPos.y;
     }
+
+	if (newPos.x < 0) {newPos.x = 0;}
+	if (newPos.y < 0) {newPos.y = 0;}
+	if (newPos.x > levelMaxTileX) {newPos.x = levelMaxTileX;}
+	if (newPos.y > levelMaxTileY) {newPos.y = levelMaxTileY;}
 
 	for (let line of verticalLines) {
 		line.position.x = -userTileX % TILE_SIZE;
