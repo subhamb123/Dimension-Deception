@@ -1,6 +1,6 @@
 module.exports = {
     createPlayer: function(name) {
-        return {name: name, health: 100, x: 0, y:0, dx: 0, dy: 0};
+        return {name: name, health: 100, x: 0, y:0, dx: 0, dy: 0, level: 0};
     },
     createBullet: function(x, y, vx, vy) {
         return {x: x, y: y, vx: vx, vy: vy};
@@ -17,6 +17,16 @@ module.exports = {
                 let bullet = bullets[prop];
                 if (bullet.x < 0 || bullet.y < 0 || bullet.x > boardSize || bullet.y > boardSize) {
                     delete bullets[prop];
+                }
+            }
+        }
+    },
+    removePortals: function(portals, lifetime) {
+        for (let prop in portals) {
+            if (portals.hasOwnProperty(prop)) {
+                let portal = portals[prop];
+                if (Date.now() - portal.start > lifetime) {
+                    delete portals[prop];
                 }
             }
         }

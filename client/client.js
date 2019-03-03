@@ -39,8 +39,10 @@ let userLevel = 0;
 let userTileX = Math.random() * levelMaxTileX;
 let userTileY = Math.random() * levelMaxTileY;
 let myHealth = 100;
+let portalCooldown = Date.now();
 
 let userSpeed = 10;
+const portalMaxCooldown = 5000;
 const userSpeedMultiplerByLevel = [
 	1,
 	2,
@@ -73,7 +75,7 @@ const boundaryBox = createBoundaryBox();
 
 let gamestate = {
 	players: [],
-	portals: [],
+	portals: {},
 	bullets: {},
     trees: [],
     rocks: []
@@ -121,9 +123,29 @@ socket.on("update", data => {
             }
         }
     }
+    for (let id in gamestate.portals) {
+        if (gamestate.portals.hasOwnProperty(id)) {
+            if (!data.gamestate.portals.hasOwnProperty(id)) {
+                // console.log('removed %s', gamestate.bullets[id]);
+                stage.removeChild(gamestate.portals[id]);
+                delete gamestate.portals[id];
+            }
+        }
+    }
+    for (let id in data.gamestate.portals) {
+        if (data.gamestate.portals.hasOwnProperty(id)) {
+            if (gamestate.portals.hasOwnProperty(id)) {
+                gamestate.portals[id].tileX = data.gamestate.portals[id].x;
+                gamestate.portals[id].tileY = data.gamestate.portals[id].y;
+                gamestate.portals[id].direction = data.gamestate.portals[id].direction;
+                gamestate.portals[id].level = data.gamestate.portals[id].level;
+            } else {
+                makePortal(data.gamestate.portals[id], id);
+            }
+        }
+    }
 });
 
-makePortal();
 
 const userSprite = createUserSprite();
 
@@ -138,7 +160,8 @@ app.renderer.plugins.interaction.on("mousedown", event => {
 		y: userTileY,
 		vx: (point.x - app.renderer.width / 2) / hypotenuse * BULLET_SPEED,
         vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED,
-        id: Math.random() * 20000
+        id: Math.random() * 20000,
+        level: userLevel
 	};
     makeBullet(bullet);
 	socket.emit("playershoot", bullet);
@@ -239,7 +262,7 @@ socket.on('terrain', function(data) {
 	setGamestateTreesToTerrain(data[userLevel]);
 });
 
-function makePortal() {
+function makePortal(portal, id = socket.id) {
 	const circle = new PIXI.Graphics();
 	const OUTLINE_WIDTH = 10;
 	const RADIUS = TILE_SIZE;
@@ -247,12 +270,14 @@ function makePortal() {
 	circle.beginFill(0x000000);
 	circle.drawCircle(0, 0, RADIUS);
 	circle.endFill();
-	circle.tileX = levelMaxTileX * Math.random();
-	circle.tileY = levelMaxTileY * Math.random();
-	circle.radius = RADIUS;
+	circle.tileX = portal.x;
+    circle.tileY = portal.y;
+    circle.direction = portal.direction;
+    circle.level = portal.level;
+    circle.radius = RADIUS;
 
 	stage.addChild(circle);
-	gamestate.portals.push(circle);
+	gamestate.portals[id] = circle;
 }
 
 // draws a grid of horizontal and vertical lines
@@ -279,42 +304,53 @@ function drawLines() {
 }
 
 function isInPortal(portal) {
+    if (portal.level !== userLevel) {return false;}
 	let distance = Math.hypot(userTileX - portal.tileX, userTileY - portal.tileY);
-	return distance < TILE_SIZE * 3/ 2;
+	return distance < TILE_SIZE * 3/ 2 ? distance : false;
 }
 
 controls.q.press = () => {
-	for (let portal of gamestate.portals) {
-		if (isInPortal(portal)) {
-			userLevel++;
-			if (userLevel === terrainByLevels.length) {
-				userLevel = terrainByLevels.length - 1;
-				return;
-			} else {
-				ELEMENTS.dimension.innerHTML = userLevel + 1;
-				setGamestateRocksToTerrain(terrainByLevels[userLevel]);
-				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
-				return;
-			}
-		}
-	}
+    if (userLevel === terrainByLevels.length - 1) {return;}
+    if (Date.now() - portalCooldown < portalMaxCooldown) {return;}
+    portalCooldown = Date.now();
+    let portal = {x: userTileX, y: userTileY, direction: 1, level: userLevel};
+    socket.emit('playerportal', portal);
+    makePortal(portal);
+    userLevel++;
+    updateDimension();
 };
 controls.e.press = () => {
-	for (let portal of gamestate.portals) {
-		if (isInPortal(portal)) {
-			userLevel--;
-			if (userLevel < 0) {
-				userLevel = 0;
-				return;
-			} else {
-				ELEMENTS.dimension.innerHTML = userLevel + 1;
-				setGamestateRocksToTerrain(terrainByLevels[userLevel]);
-				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
-				return;
-			}
-		}
-	}
+    if (userLevel === 0) {return;}
+    if (Date.now() - portalCooldown < portalMaxCooldown) {return;}
+    portalCooldown = Date.now();
+    let portal = {x: userTileX, y: userTileY, direction: -1, level: userLevel};
+    socket.emit('playerportal', portal);
+    makePortal(portal);
+    userLevel--;
+    updateDimension();
 };
+
+controls.space.press = () => {
+    let portal = null;
+    let dist = 0;
+    for (let p of Object.values(gamestate.portals)) {
+        let d = isInPortal(p);
+        if (d && (portal == null || d < dist)) {
+            dist = d;
+            portal = p;
+        }
+    }
+    if (portal != null) {
+        userLevel += portal.direction;
+        updateDimension();
+    }
+};
+
+function updateDimension() {
+    ELEMENTS.dimension.innerHTML = userLevel + 1;
+    setGamestateTreesToTerrain(terrainByLevels[userLevel]);
+
+}
 
 function setup() {
 	app.renderer.render(app.stage);
@@ -424,11 +460,12 @@ function gameLoop(delta) {
 			bullet.x = (bullet.tileX - userTileX) + app.renderer.width / 2;
 			bullet.y = (bullet.tileY - userTileY) + app.renderer.height / 2;
 		}
-	}
+    }
 
-	for (let portal of gamestate.portals) {
+	for (let portal of Object.values(gamestate.portals)) {
 		portal.x = (portal.tileX - userTileX) + app.renderer.width / 2;
-		portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
+        portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
+        portal.visible = portal.level === userLevel ? true : false;
 	}
 	for (let tree of gamestate.trees) {
 		let distance = Math.hypot(userTileX - tree.tileX, userTileY - tree.tileY) / (TILE_SIZE / 2 + tree.radius);
@@ -438,7 +475,7 @@ function gameLoop(delta) {
 			tree.alpha = 0.85;
 		}
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;
-		tree.y = (tree.tileY - userTileY) + app.renderer.height / 2;
+        tree.y = (tree.tileY - userTileY) + app.renderer.height / 2;
 	}
 	for (let rock of gamestate.rocks) {
 		rock.x = (rock.tileX - userTileX) + app.renderer.width / 2;
@@ -473,7 +510,8 @@ function gameLoop(delta) {
 			y: userTileY,
 			dx: 0,
 			dy: 0,
-			name: NAME
+            name: NAME,
+            level: userLevel
 		}
 	});
 

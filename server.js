@@ -7,6 +7,7 @@ var io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
 
 const BOARD_SIZE = 1000;
+const PORTAL_LIFETIME = 30 * 1000;
 
 server.listen(port, () => {
 	console.log("Server listening at port " + port);
@@ -18,7 +19,7 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: {}, items: [], portals: [], ticks: 0};
+let gamestate = {players: {}, bullets: {}, items: [], portals: {}, ticks: 0};
 const PHYSICS = require('./physics');
 let terrainByLevels = [{}, {}, {}, {}, {}];
 
@@ -69,7 +70,8 @@ io.on("connection", function(socket) {
 		gamestate.bullets[bullet.id] = bullet;
 	});
 	socket.on('playerportal', function(portal) {
-		gamestate.portals.push(portal);
+		portal.start = Date.now();
+		gamestate.portals[socket.id] = portal;
 	});
 
 });
@@ -82,6 +84,7 @@ function mainLoop(timeUsed = 0) {
 	PHYSICS.bulletsHit(gamestate);
 	//check if bullets removeable
 	GAMESTATE.removeBullets(gamestate.bullets, BOARD_SIZE);
+	GAMESTATE.removePortals(gamestate.portals, PORTAL_LIFETIME);
 
 	// send to every client
 	io.emit("update", {
