@@ -23,11 +23,13 @@ const PHYSICS = require('./physics');
 const GENERATOR = require('./procedural gen/obstaclesgen');
 (function(obstacles){
 	let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
-	rocks.foreach(e => e.name = "rock");
+	for (const rock of rocks) {
+		rock.name = 'rock';
+	}
 	obstacles.push(...rocks);
-	
 
-})(obstacles);
+
+})(gamestate.obstacles);
 
 io.on('connection', function(socket){
 	console.log('a user connected');
@@ -41,9 +43,9 @@ io.on('connection', function(socket){
 	socket.on('playermove', function(data) {
 		gamestate.players[socket.id] = data.player;
 	});
-	socket.on('playershoot', function(data){
-		data.bullet.damage = 5;
-		gamestate.bullets.push(data.bullet);
+	socket.on('playershoot', function(bullet){
+		bullet.damage = 5;
+		gamestate.bullets.push(bullet);
 	})
 
 });
