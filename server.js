@@ -6,6 +6,8 @@ const server = require("http").createServer(app);
 var io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
 
+const BOARD_SIZE = 1000;
+
 server.listen(port, () => {
 	console.log("Server listening at port " + port);
 });
@@ -16,22 +18,29 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: [], obstacles: [], items: [], ticks: 0};
+let gamestate = {players: {}, bullets: [], items: [], ticks: 0};
 const PHYSICS = require('./physics');
+let terrain = {};
 
 //generate world
 const GENERATOR = require('./procedural gen/obstaclesgen');
-(function(obstacles) {
-	let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
-	for (const rock of rocks) {
-		rock.name = 'rock';
+(function(obstacles){
+
+	//let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
+	//obstacles.rocks = rocks;
+
+	let trees = GENERATOR.generateWithHeight(BOARD_SIZE, BOARD_SIZE, 0.01, 5);
+	for (let tree of trees) {
+		tree.h = Math.random() + 0.5;
 	}
-	obstacles.push(...rocks);
-})(gamestate.obstacles);
+	obstacles.trees = trees;
+})(terrain);
 
 io.on("connection", function(socket) {
 	users[socket.id] = socket;
 	console.log("Connect! Num users: " + Object.keys(users).length);
+	socket.emit('terrain', terrain);
+	console.log(terrain);
 
 	socket.on("disconnect", function() {
 		delete users[socket.id];
@@ -60,6 +69,7 @@ function mainLoop(timeUsed = 0) {
 
 	// Game logic, check if bullet intersects
 	PHYSICS.bulletsHit(gamestate);
+	//check if bullets removeable
 
 	// send to every client
 	io.emit("update", {

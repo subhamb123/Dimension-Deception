@@ -71,7 +71,8 @@ let gameState = {
 	players: [],
 	portals: [],
 	bullets: [],
-	trees: createRandomTrees(3),
+    //trees: createRandomTrees(3),
+    trees: [],
 	rocks: []
 };
 
@@ -177,6 +178,24 @@ function createRandomTrees(n) {
 	}
 	return trees;
 }
+socket.on('terrain', function(data) {
+    console.log(data);
+    for (let tree of data.trees) {
+        const circle = new PIXI.Graphics();
+		const OUTLINE_WIDTH = 20;
+		const RADIUS = (tree.h) * TILE_SIZE;
+		circle.lineStyle(OUTLINE_WIDTH, 0x17B530, 1);
+		circle.beginFill(0x21D53D);
+		circle.drawCircle(0, 0, RADIUS);
+		circle.endFill();
+		circle.tileX = tree.x;
+		circle.tileY = tree.y;
+		circle.radius = RADIUS;
+
+		stage.addChild(circle);
+		gameState.trees.push(circle);
+    }
+});
 
 function makePortal() {
 	const circle = new PIXI.Graphics();
@@ -228,9 +247,44 @@ function isOutOfBounds(x, y) {
 
 function isValidPos(x, y, userRadius) {
 	for (let tree of gameState.trees) {
-		const distance = Math.hypot(x - tree.tileX, y - tree.tileY);
-		if (distance < userRadius + tree.radius) {
-			return false;
+		const distance = Math.hypot(pos.x - tree.tileX, pos.y - tree.tileY);
+		if (distance < userRadius + tree.radius - 0.001) {
+            let intersections = intersectionCircleAndLine(userRadius + tree.radius, 
+                {x: pos.x - tree.tileX, y: pos.y - tree.tileY, dx: vector.dx, dy: vector.dy});
+            let intersection;
+            intersections[0][0] += tree.tileX;
+            intersections[0][1] += tree.tileY;
+            intersections[1][0] += tree.tileX;
+            intersections[1][1] += tree.tileY;
+            if (Math.hypot(intersections[0][0] - originalPos.x, intersections[0][1] - originalPos.y) 
+            < Math.hypot(intersections[1][0] - originalPos.x, intersections[1][1] - originalPos.y)) {
+                intersection = intersections[0];
+            } else {
+                intersection = intersections[1];
+            }
+            let newPos = {x: intersection[0], y: intersection[1]};
+            if (distance < tree.radius || Math.hypot(bestPos.x - originalPos.x, bestPos.y - originalPos.y) >
+                Math.hypot(newPos.x - originalPos.x, newPos.y - originalPos.y)) {
+                    
+                if (Math.hypot(newPos.x - originalPos.x, newPos.y - originalPos.y) < 0.0001) {
+                    let directLine = {x: newPos.x, y: newPos.y, 
+                        dx: newPos.x - tree.tileX, dy: newPos.y - tree.tileY};
+                    if (!(Math.abs(directLine.dx * vector.dy - directLine.dy * vector.dx) < 0.000000001)) { 
+                        let tangent = perpendicularLine(directLine);
+                        //check if direction change
+                        if (tangent.dx * vector.dx + tangent.dy * vector.dy < 0) {
+                            tangent.dx *= -1;
+                            tangent.dy *= -1;
+                        }
+                        limitMag(tangent, userSpeed);
+                        newPos.x += tangent.dx;
+                        newPos.y += tangent.dy;
+                        //fixPos(newPos, tangent, userRadius, originalPos)
+                        console.log('"fixing position"');
+                    }
+                }
+                bestPos = newPos;
+            }
 		}
 	}
 	return true;
@@ -256,6 +310,11 @@ function gameLoop(delta) {
 		userTileX = newPos.x;
 		userTileY = newPos.y;
 	}
+
+	if (newPos.x < 0) {newPos.x = 0;}
+	if (newPos.y < 0) {newPos.y = 0;}
+	if (newPos.x > levelMaxTileX) {newPos.x = levelMaxTileX;}
+	if (newPos.y > levelMaxTileY) {newPos.y = levelMaxTileY;}
 
 	for (let line of verticalLines) {
 		line.position.x = -userTileX % TILE_SIZE;
