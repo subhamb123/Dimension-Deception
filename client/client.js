@@ -1,5 +1,8 @@
 const socket = io();
 
+const NAME = "Player " + Math.floor(Math.random() * 1000);
+socket.emit("addplayer", NAME);
+
 const BACKGROUND_COLOR = 0x282C34;
 
 let app = new PIXI.Application({
@@ -22,11 +25,11 @@ const stage = app.stage;
 
 const TILE_SIZE = 50;
 
-let userTileX = 10;
-let userTileY = 10;
-let userLevel = 0;
 let levelMaxTileX = 1000;
 let levelMaxTileY = 1000;
+let userLevel = 0;
+let userTileX = Math.random() * levelMaxTileX;
+let userTileY = Math.random() * levelMaxTileY;
 
 let userSpeed = 10;
 const BULLET_SPEED = 20;
@@ -64,10 +67,37 @@ const boundaryBox = createBoundaryBox();
 
 let gameState = {
 	players: [],
+	portals: [],
 	bullets: [],
-	trees: createRandomTrees(5),
+	trees: createRandomTrees(3),
 	rocks: []
 };
+
+let otherPlayers = {
+	// data[i] maps to sprites[i]
+	data: [], // from server
+	sprites: [] // on client
+};
+
+function addPlayerSprite() {
+	const circle = new PIXI.Graphics();
+	const OUTLINE_WIDTH = 10;
+	circle.lineStyle(OUTLINE_WIDTH, 0x3AB6CC, 1);
+	circle.beginFill(0x111111);
+	circle.drawCircle(0, 0, (TILE_SIZE - OUTLINE_WIDTH) / 2);
+	circle.endFill();
+	stage.addChild(circle);
+	otherPlayers.sprites.push(circle);
+}
+
+socket.on("update", data => {
+	otherPlayers.data = Object.values(data.gamestate.players);
+	while (otherPlayers.data.length > otherPlayers.sprites.length) {
+		addPlayerSprite();
+	}
+});
+
+makePortal();
 
 const userSprite = createUserSprite();
 
@@ -144,6 +174,22 @@ function createRandomTrees(n) {
 		trees.push(circle);
 	}
 	return trees;
+}
+
+function makePortal() {
+	const circle = new PIXI.Graphics();
+	const OUTLINE_WIDTH = 10;
+	const RADIUS = TILE_SIZE;
+	circle.lineStyle(OUTLINE_WIDTH, 0xB520A0, 1);
+	circle.beginFill(BACKGROUND_COLOR);
+	circle.drawCircle(0, 0, RADIUS);
+	circle.endFill();
+	circle.tileX = levelMaxTileX * Math.random();
+	circle.tileY = levelMaxTileY * Math.random();
+	circle.radius = RADIUS;
+
+	stage.addChild(circle);
+	gameState.portals.push(circle);
 }
 
 // draws a grid of horizontal and vertical lines
@@ -232,6 +278,10 @@ function gameLoop(delta) {
 		}
 	}
 
+	for (let portal of gameState.portals) {
+		portal.x = (portal.tileX - userTileX) + app.renderer.width / 2;
+		portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
+	}
 	for (let tree of gameState.trees) {
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;
 		tree.y = (tree.tileY - userTileY) + app.renderer.height / 2;
@@ -240,6 +290,28 @@ function gameLoop(delta) {
 		rock.x = (rock.tileX - userTileX) + app.renderer.width / 2;
 		rock.y = (rock.tileY - userTileY) + app.renderer.height / 2;
 	}
+
+	for (let i = 0; i < otherPlayers.data.length; i++) {
+		if (otherPlayers.data[i].name === NAME) {
+			app.stage.removeChild(otherPlayers.sprites[i]);
+		} else {
+			otherPlayers.data[i].x += otherPlayers.data[i].dx;
+			otherPlayers.data[i].y += otherPlayers.data[i].dy;
+			otherPlayers.sprites[i].x = (otherPlayers.data[i].x - userTileX) + app.renderer.width / 2;
+			otherPlayers.sprites[i].y = (otherPlayers.data[i].y - userTileY) + app.renderer.height / 2;
+		}
+	}
+
+	socket.emit("playermove", {
+		player: {
+			x: userTileX,
+			y: userTileY,
+			dx: 0,
+			dy: 0,
+			name: NAME,
+			health: 100
+		}
+	});
 
 	DATA_ELEMENT.innerHTML = `x: ${Math.round(userTileX)}, y: ${Math.round(userTileY)}`;
 }

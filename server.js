@@ -7,7 +7,7 @@ var io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
-	console.log("Server listening at port %d", port);
+	console.log("Server listening at port " + port);
 });
 
 // Routing
@@ -27,20 +27,21 @@ const GENERATOR = require('./procedural gen/obstaclesgen');
 		rock.name = 'rock';
 	}
 	obstacles.push(...rocks);
-
-
 })(gamestate.obstacles);
 
-io.on('connection', function(socket){
-	console.log('a user connected');
+io.on('connection', function(socket) {
 	users[socket.id] = socket;
+	console.log("Connect! Num users: " + Object.keys(users).length);
+
 	socket.on("disconnect", function() {
 		delete users[socket.id];
+		console.log("Disconnect! Num users: " + Object.keys(users).length);
 	});
 	socket.on('addplayer', function(data){
 		gamestate.players[socket.id] = GAMESTATE.createPlayer(data.name);
 	});
 	socket.on('playermove', function(data) {
+		console.log(data.player);
 		gamestate.players[socket.id] = data.player;
 	});
 	socket.on('playershoot', function(bullet){
@@ -50,16 +51,18 @@ io.on('connection', function(socket){
 
 });
 
-const SLEEP_TIME = 16.667;
+const SLEEP_TIME = 20;
 function mainLoop(timeUsed = 0) {
 	let t = Date.now();
-	//Game logic, check if bullet intersects
+
+	// Game logic, check if bullet intersects
 	PHYSICS.bulletsHit(gamestate);
 
-
-	io.emit('update', {
+	// send to every client
+	io.emit("update", {
 		gamestate: gamestate
 	});
+
 	t = Date.now() - t;
 	setTimeout(function() {
 		mainLoop(t);
@@ -68,4 +71,3 @@ function mainLoop(timeUsed = 0) {
 }
 
 mainLoop();
-
