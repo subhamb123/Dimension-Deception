@@ -8,14 +8,30 @@ html, body {
 	height: 100%;
 }
 
-#data {
+header, #data {
 	position: fixed;
-	top: 0;
+	bottom: 0;
 	right: 0;
 	padding: 0 20px;
-	background: #222;
+	background: #282C34;
 	color: #eee;
 	z-index: 10;
 	font-size: 40px;
 	font-family: monospace;
+}
+
+header {
+	width: 100%;
+	top: 10px;
+	left: 0;
+	text-align: center;
+	background: none;
+}
+
+header h1 {
+	font-family: "Montserrat", sans-serif;
+	text-transform: uppercase;
+	font-weight: 400;
+	font-size: 30px;
+	color: #3f67b4;
 }
