@@ -34,6 +34,7 @@ io.on('connection', function(socket){
 		gamestate.players[socket.id] = data.player;
 	});
 	socket.on('playershoot', function(data){
+		data.bullet.damage = 5;
 		gamestate.bullets.push(data.bullet);
 	})
 
