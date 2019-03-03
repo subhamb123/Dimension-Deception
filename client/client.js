@@ -280,9 +280,14 @@ controls.q.press = () => {
 	for (let portal of gamestate.portals) {
 		if (isInPortal(portal)) {
 			userLevel++;
-			ELEMENTS.dimension.innerHTML = userLevel + 1;
-			setGamestateTreesToTerrain(terrainByLevels[userLevel]);
-			return;
+			if (userLevel === terrainByLevels.length) {
+				userLevel = terrainByLevels.length - 1;
+				return;
+			} else {
+				ELEMENTS.dimension.innerHTML = userLevel + 1;
+				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
+				return;
+			}
 		}
 	}
 };
@@ -290,9 +295,14 @@ controls.e.press = () => {
 	for (let portal of gamestate.portals) {
 		if (isInPortal(portal)) {
 			userLevel--;
-			ELEMENTS.dimension.innerHTML = userLevel + 1;
-			setGamestateTreesToTerrain(terrainByLevels[userLevel]);
-			return;
+			if (userLevel < 0) {
+				userLevel = 0;
+				return;
+			} else {
+				ELEMENTS.dimension.innerHTML = userLevel + 1;
+				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
+				return;
+			}
 		}
 	}
 };
