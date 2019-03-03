@@ -24,10 +24,9 @@ let userTileY = 10;
 let userLevel = 0;
 
 let userSpeed = 10;
+const BULLET_SPEED = 20;
 
-let levelArray = generate2DArrayOfSize(100);
-
-console.log(levelArray);
+// let levelArray = generate2DArrayOfSize(100);
 
 function generate2DArrayOfSize(size) {
 	let arr = [];
@@ -56,9 +55,49 @@ let controls = {
 const horizontalLines = [];
 const verticalLines = [];
 
+let gameState = {
+	players: [],
+	bullets: [],
+	trees: [],
+	rocks: []
+};
+
 drawLines();
 
 const userSprite = createUserSprite();
+
+// handle shooting
+app.renderer.plugins.interaction.on("mousedown", event => {
+	const point = event.data.global;
+
+	const hypotenuse = Math.hypot(point.x - app.renderer.width / 2, point.y - app.renderer.height / 2);
+
+	const bullet = {
+		x: userTileX,
+		y: userTileY,
+		vx: (point.x - app.renderer.width / 2) / hypotenuse * BULLET_SPEED,
+		vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED
+	};
+	makeBullet(bullet);
+	socket.emit("playershoot", bullet);
+});
+
+function makeBullet(bullet) {
+	const circle = new PIXI.Graphics();
+	const OUTLINE_WIDTH = 2;
+	circle.beginFill(0xE63232);
+	circle.drawCircle(0, 0, (TILE_SIZE / 5 - OUTLINE_WIDTH) / 2);
+	circle.endFill();
+	circle.x = app.renderer.width / 2;
+	circle.y = app.renderer.height / 2;
+	circle.tileX = bullet.x;
+	circle.tileY = bullet.y;
+	circle.vx = bullet.vx;
+	circle.vy = bullet.vy;
+
+	stage.addChild(circle);
+	gameState.bullets.push(circle);
+}
 
 setup();
 
@@ -112,6 +151,13 @@ function gameLoop(delta) {
 	}
 	for (let line of horizontalLines) {
 		line.position.y = -userTileY % TILE_SIZE;
+	}
+
+	for (let bullet of gameState.bullets) {
+		bullet.tileX += bullet.vx / delta;
+		bullet.tileY += bullet.vy / delta;
+		bullet.x = (bullet.tileX - userTileX) + app.renderer.width / 2;
+		bullet.y = (bullet.tileY - userTileY) + app.renderer.height / 2;
 	}
 
 	DATA_ELEMENT.innerHTML = `x: ${Math.floor(userTileX * 100)/100}, y: ${Math.floor(userTileY * 100)/100}`;
