@@ -20,11 +20,12 @@ let users = {};
 const GAMESTATE = require('./gamestate.js');
 let gamestate = {players: {}, bullets: {}, items: [], ticks: 0};
 const PHYSICS = require('./physics');
-let terrain = {};
+// let terrain = {};
+let terrainByLevels = [{}, {}, {}, {}, {}];
 
 //generate world
 const GENERATOR = require('./procedural gen/obstaclesgen');
-(function(obstacles){
+function generateTerrain(obstacles) {
 
 	//let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
 	//obstacles.rocks = rocks;
@@ -34,12 +35,15 @@ const GENERATOR = require('./procedural gen/obstaclesgen');
 		tree.h = Math.random() + 0.5;
 	}
 	obstacles.trees = trees;
-})(terrain);
+}
+for (let i = 0; i < terrainByLevels.length; i++) {
+	generateTerrain(terrainByLevels[i]);
+}
 
 io.on("connection", function(socket) {
 	users[socket.id] = socket;
 	console.log("Connect! Num users: " + Object.keys(users).length);
-	socket.emit('terrain', terrain); 
+	socket.emit('terrain', terrainByLevels);
 
 	socket.on("disconnect", function() {
 		delete users[socket.id];
