@@ -458,7 +458,7 @@ function gameLoop(delta) {
 	for (let portal of Object.values(gamestate.portals)) {
 		portal.x = (portal.tileX - userTileX) + app.renderer.width / 2;
         portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
-        portal.visible = portal.level === user.level;
+        portal.visible = portal.level === userLevel;
 	}
 	for (let tree of gamestate.trees) {
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;
