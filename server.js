@@ -16,10 +16,18 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: [], ticks: 0};
+let gamestate = {players: {}, bullets: [], obstacles: [], items: [], ticks: 0};
 const PHYSICS = require('./physics');
 
+//generate world
+const GENERATOR = require('./procedural gen/obstaclesgen');
+(function(obstacles){
+	let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
+	rocks.foreach(e => e.name = "rock");
+	obstacles.push(...rocks);
+	
 
+})(obstacles);
 
 io.on('connection', function(socket){
 	console.log('a user connected');
@@ -40,7 +48,7 @@ io.on('connection', function(socket){
 
 });
 
-const SLEEP_TIME = 15;
+const SLEEP_TIME = 16.667;
 function mainLoop(timeUsed = 0) {
 	let t = Date.now();
 	//Game logic, check if bullet intersects
