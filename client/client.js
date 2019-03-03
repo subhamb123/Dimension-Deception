@@ -2,6 +2,7 @@ const socket = io();
 
 const NAME = "Player " + Math.floor(Math.random() * 1000);
 socket.on("connect", () => {
+	document.getElementById("name").innerHTML = NAME;
 	socket.emit("addplayer", NAME);
 });
 
@@ -21,7 +22,12 @@ app.renderer.autoResize = true;
 app.renderer.resize(window.innerWidth, window.innerHeight);
 document.body.appendChild(app.view);
 
-const DATA_ELEMENT = document.getElementById("data");
+const ELEMENTS = {
+	data: document.getElementById("data"),
+	health: document.getElementById("health"),
+	dimension: document.getElementById("dimension"),
+	players: document.getElementById("players")
+};
 
 const stage = app.stage;
 
@@ -76,6 +82,7 @@ let gamestate = {
 	rocks: []
 };
 
+let numUsers = 0;
 let otherPlayers = {
 	// data[i] maps to sprites[i]
 	data: [], // from server
@@ -259,14 +266,14 @@ function fixPos(pos, vector, userRadius, originalPos) {
 	for (let tree of gamestate.trees) {
 		const distance = Math.hypot(pos.x - tree.tileX, pos.y - tree.tileY);
 		if (distance < userRadius + tree.radius - 0.001) {
-            let intersections = intersectionCircleAndLine(userRadius + tree.radius, 
+            let intersections = intersectionCircleAndLine(userRadius + tree.radius,
                 {x: pos.x - tree.tileX, y: pos.y - tree.tileY, dx: vector.dx, dy: vector.dy});
             let intersection;
             intersections[0][0] += tree.tileX;
             intersections[0][1] += tree.tileY;
             intersections[1][0] += tree.tileX;
             intersections[1][1] += tree.tileY;
-            if (Math.hypot(intersections[0][0] - originalPos.x, intersections[0][1] - originalPos.y) 
+            if (Math.hypot(intersections[0][0] - originalPos.x, intersections[0][1] - originalPos.y)
             < Math.hypot(intersections[1][0] - originalPos.x, intersections[1][1] - originalPos.y)) {
                 intersection = intersections[0];
             } else {
@@ -277,9 +284,9 @@ function fixPos(pos, vector, userRadius, originalPos) {
                 Math.hypot(newPos.x - originalPos.x, newPos.y - originalPos.y)) {
 
                 if (Math.hypot(newPos.x - originalPos.x, newPos.y - originalPos.y) < 0.0001) {
-                    let directLine = {x: newPos.x, y: newPos.y, 
+                    let directLine = {x: newPos.x, y: newPos.y,
                         dx: newPos.x - tree.tileX, dy: newPos.y - tree.tileY};
-                    if (!(Math.abs(directLine.dx * vector.dy - directLine.dy * vector.dx) < 0.000000001)) { 
+                    if (!(Math.abs(directLine.dx * vector.dy - directLine.dy * vector.dx) < 0.000000001)) {
                         let tangent = perpendicularLine(directLine);
                         //check if direction change
                         if (tangent.dx * vector.dx + tangent.dy * vector.dy < 0) {
@@ -325,7 +332,7 @@ function gameLoop(delta) {
 	if (newPos.y < 0) {newPos.y = 0;}
 	if (newPos.x > levelMaxTileX) {newPos.x = levelMaxTileX;}
     if (newPos.y > levelMaxTileY) {newPos.y = levelMaxTileY;}
-    
+
     userTileX = newPos.x;
     userTileY = newPos.y;
 
@@ -380,6 +387,11 @@ function gameLoop(delta) {
 		otherPlayers.sprites.pop();
 	}
 
+	if (numUsers !== otherPlayers.data.length) {
+		numUsers = otherPlayers.data.length;
+		ELEMENTS.players.innerHTML = numUsers;
+	}
+
 	socket.emit("playermove", {
 		player: {
 			x: userTileX,
@@ -391,7 +403,7 @@ function gameLoop(delta) {
 		}
 	});
 
-	DATA_ELEMENT.innerHTML = `x: ${Math.round(userTileX)}, y: ${Math.round(userTileY)}`;
+	ELEMENTS.data.innerHTML = `x: ${Math.round(userTileX)}, y: ${Math.round(userTileY)}`;
 }
 
 setup();
