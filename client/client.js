@@ -62,7 +62,8 @@ let controls = {
 	right: keyboard(39),
 	left: keyboard(37),
 	q: keyboard(81),
-	e: keyboard(69)
+    e: keyboard(69),
+    space: keyboard(32)
 };
 
 const horizontalLines = [];
@@ -106,7 +107,7 @@ socket.on("update", data => {
                 // console.log('removed %s', gamestate.bullets[id]);
                 stage.removeChild(gamestate.bullets[id]);
                 delete gamestate.bullets[id];
-            }
+            }wfwrf
         }
     }
     for (let id in data.gamestate.bullets) {

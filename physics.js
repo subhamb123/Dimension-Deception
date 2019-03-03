@@ -1,6 +1,6 @@
 let geometry = require("./geometry");
 
-const PLAYER_RADIUS = 10;
+const PLAYER_RADIUS = 25;
 module.exports = {
     bulletsHit: function(gamestate) {
         for (let prop in gamestate.bullets) {
