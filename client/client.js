@@ -70,7 +70,7 @@ const boundaryBox = createBoundaryBox();
 let gamestate = {
 	players: [],
 	portals: [],
-	bullets: [],
+	bullets: {},
     //trees: createRandomTrees(3),
     trees: [],
 	rocks: []
@@ -98,12 +98,24 @@ socket.on("update", data => {
 	while (otherPlayers.data.length > otherPlayers.sprites.length) {
 		addPlayerSprite();
     }
-    for (let bullet of gamestate.bullets) {
-        app.removeChild(bullet);
+    for (let id in gamestate.bullets) {
+        if (gamestate.bullets.hasOwnProperty(id)) {
+            if (!data.gamestate.bullets.hasOwnProperty(id)) {
+                console.log('removed %s', gamestate.bullets[id]);
+                stage.removeChild(gamestate.bullets[id]);
+                delete gamestate.bullets[id];
+            }
+        }
     }
-    gamestate.bullets = [];
-    for (let bullet of data.gamestate.bullets) {
-        makeBullet(bullet);
+    for (let id in data.gamestate.bullets) {
+        if (data.gamestate.bullets.hasOwnProperty(id)) {
+            if (gamestate.bullets.hasOwnProperty(id)) {
+                gamestate.bullets[id].tileX = data.gamestate.bullets[id].x;
+                gamestate.bullets[id].tileY = data.gamestate.bullets[id].y;
+            } else {
+                makeBullet(data.gamestate.bullets[id]);
+            }
+        }
     }
 });
 
@@ -121,7 +133,8 @@ app.renderer.plugins.interaction.on("mousedown", event => {
 		x: userTileX,
 		y: userTileY,
 		vx: (point.x - app.renderer.width / 2) / hypotenuse * BULLET_SPEED,
-        vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED
+        vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED,
+        id: Math.random() * 20000
 	};
     makeBullet(bullet);
 	socket.emit("playershoot", bullet);
@@ -138,10 +151,11 @@ function makeBullet(bullet) {
 	circle.tileX = bullet.x;
 	circle.tileY = bullet.y;
 	circle.vx = bullet.vx;
-	circle.vy = bullet.vy;
+    circle.vy = bullet.vy;
+    circle.id = bullet.id;
 
 	stage.addChild(circle);
-	gamestate.bullets.push(circle);
+	gamestate.bullets[bullet.id] = circle;
 }
 
 function createUserSprite() {
@@ -339,12 +353,13 @@ function gameLoop(delta) {
 	boundaryBox.x = app.renderer.width / 2 - userTileX;
 	boundaryBox.y = app.renderer.height / 2 - userTileY;
 
-	for (let i = gamestate.bullets.length - 1; i >= 0; i--) {
-		const bullet = gamestate.bullets[i];
+	for (let prop in gamestate.bullets) {
+        if (!gamestate.bullets.hasOwnProperty(prop)) {continue;}
+		const bullet = gamestate.bullets[prop];
 		bullet.tileX += bullet.vx / delta;
 		bullet.tileY += bullet.vy / delta;
 		if (isOutOfBounds(bullet.tileX, bullet.tileY)) {
-			gamestate.bullets.splice(i, 1);
+			delete gamestate.bullets[prop];
 			app.stage.removeChild(bullet);
 		} else {
 			bullet.x = (bullet.tileX - userTileX) + app.renderer.width / 2;

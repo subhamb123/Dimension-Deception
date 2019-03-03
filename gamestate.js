@@ -12,11 +12,12 @@ module.exports = {
         return {x: x, y:y, name: name, radius: radius};
     },
     removeBullets: function(bullets, boardSize) {
-        for (let i = 0; i < bullets.length; i++) {
-            let bullet = bullets[i];
-            if (bullet.x < 0 || bullet.y < 0 || bullet.x > boardSize || bullet.y > boardSize) {
-                bullets.splice(i, 1);
-                i--;
+        for (let prop in bullets) {
+            if (bullets.hasOwnProperty(prop)) {
+                let bullet = bullets[prop];
+                if (bullet.x < 0 || bullet.y < 0 || bullet.x > boardSize || bullet.y > boardSize) {
+                    delete bullets[prop];
+                }
             }
         }
     }
