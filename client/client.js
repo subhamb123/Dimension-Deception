@@ -35,7 +35,7 @@ const TILE_SIZE = 50;
 
 let levelMaxTileX = 1000;
 let levelMaxTileY = 1000;
-let userLevel = 0;
+let userLevel = 1;
 let userTileX = Math.random() * levelMaxTileX;
 let userTileY = Math.random() * levelMaxTileY;
 
@@ -65,7 +65,8 @@ let controls = {
 	down: keyboard(40),
 	right: keyboard(39),
 	left: keyboard(37),
-	space: keyboard(32)
+	q: keyboard(81),
+	e: keyboard(69)
 };
 
 const horizontalLines = [];
@@ -108,7 +109,7 @@ socket.on("update", data => {
     for (let id in gamestate.bullets) {
         if (gamestate.bullets.hasOwnProperty(id)) {
             if (!data.gamestate.bullets.hasOwnProperty(id)) {
-                console.log('removed %s', gamestate.bullets[id]);
+                // console.log('removed %s', gamestate.bullets[id]);
                 stage.removeChild(gamestate.bullets[id]);
                 delete gamestate.bullets[id];
             }
@@ -232,7 +233,7 @@ function makePortal() {
 	const OUTLINE_WIDTH = 10;
 	const RADIUS = TILE_SIZE;
 	circle.lineStyle(OUTLINE_WIDTH, 0xB520A0, 1);
-	circle.beginFill(BACKGROUND_COLOR);
+	circle.beginFill(0x000000);
 	circle.drawCircle(0, 0, RADIUS);
 	circle.endFill();
 	circle.tileX = levelMaxTileX * Math.random();
@@ -265,6 +266,28 @@ function drawLines() {
 		app.stage.addChild(line);
 	}
 }
+
+function isInPortal(portal) {
+	let distance = Math.hypot(userTileX - portal.tileX, userTileY - portal.tileY);
+	return distance < TILE_SIZE * 3/ 2;
+}
+
+controls.q.press = () => {
+	for (let portal of gamestate.portals) {
+		if (isInPortal(portal)) {
+			ELEMENTS.dimension.innerHTML = ++userLevel;
+			return;
+		}
+	}
+};
+controls.e.press = () => {
+	for (let portal of gamestate.portals) {
+		if (isInPortal(portal)) {
+			ELEMENTS.dimension.innerHTML = --userLevel;
+			return;
+		}
+	}
+};
 
 function setup() {
 	app.renderer.render(app.stage);
