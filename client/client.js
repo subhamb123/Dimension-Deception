@@ -140,11 +140,16 @@ function setup() {
 }
 
 function gameLoop(delta) {
-
-	if (controls.up.isDown || controls.w.isDown) {userTileY -= userSpeed/delta;}
-	if (controls.left.isDown || controls.a.isDown) {userTileX -= userSpeed/delta;}
-	if (controls.down.isDown || controls.s.isDown) {userTileY += userSpeed/delta;}
-	if (controls.right.isDown || controls.d.isDown) {userTileX += userSpeed/delta;}
+    let intendedX = userTileX;
+    let intendedY = userTileY;
+	if (controls.up.isDown || controls.w.isDown) {intendedY -= userSpeed/delta;}
+	if (controls.left.isDown || controls.a.isDown) {intendedX -= userSpeed/delta;}
+	if (controls.down.isDown || controls.s.isDown) {intendedY += userSpeed/delta;}
+    if (controls.right.isDown || controls.d.isDown) {intendedX += userSpeed/delta;}
+    
+    //Collsion detection
+    userTileX = intendedX;
+    userTileY = intendedY;
 
 	for (let line of verticalLines) {
 		line.position.x = -userTileX % TILE_SIZE;
