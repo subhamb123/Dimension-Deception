@@ -237,8 +237,8 @@ function setGamestateRocksToTerrain(terrain) {
         const circle = new PIXI.Graphics();
 		const OUTLINE_WIDTH = 20;
 		const RADIUS = (rock.h) * TILE_SIZE;
-		circle.lineStyle(OUTLINE_WIDTH, 0x542007, 1);
-		circle.beginFill(0x945112);
+		circle.lineStyle(OUTLINE_WIDTH, 0x404040, 1);
+		circle.beginFill(0x808080);
 		circle.drawCircle(0, 0, RADIUS);
 		circle.endFill();
 		circle.tileX = rock.x;
