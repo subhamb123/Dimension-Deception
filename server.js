@@ -20,15 +20,17 @@ let users = {};
 const GAMESTATE = require('./gamestate.js');
 let gamestate = {players: {}, bullets: {}, items: [], portals: [], ticks: 0};
 const PHYSICS = require('./physics');
-// let terrain = {};
 let terrainByLevels = [{}, {}, {}, {}, {}];
 
 //generate world
 const GENERATOR = require('./procedural gen/obstaclesgen');
-function generateTerrain(obstacles) {
+function generateTerrain(obstacles, freqRocks) {
 
-	//let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
-	//obstacles.rocks = rocks;
+	let rocks = GENERATOR.generateWithHeight(BOARD_SIZE, BOARD_SIZE, 0.01, freqRocks + 4);
+	for (let rock of rocks) {
+		rock.h = Math.random() * freqRocks / 2 + 0.6;
+	}
+	obstacles.rocks = rocks;
 
 	let trees = GENERATOR.generateWithHeight(BOARD_SIZE, BOARD_SIZE, 0.01, 5);
 	for (let tree of trees) {
@@ -37,7 +39,7 @@ function generateTerrain(obstacles) {
 	obstacles.trees = trees;
 }
 for (let i = 0; i < terrainByLevels.length; i++) {
-	generateTerrain(terrainByLevels[i]);
+	generateTerrain(terrainByLevels[i], i / 2);
 }
 
 io.on("connection", function(socket) {

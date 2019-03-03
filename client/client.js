@@ -42,11 +42,11 @@ let myHealth = 100;
 
 let userSpeed = 10;
 const userSpeedMultiplerByLevel = [
-	0.5,
 	1,
 	2,
+	3,
 	4,
-	8
+	5
 ];
 const BULLET_SPEED = 20;
 
@@ -75,7 +75,8 @@ let gamestate = {
 	players: [],
 	portals: [],
 	bullets: {},
-    trees: []
+    trees: [],
+    rocks: []
 };
 
 let numUsers = 0;
@@ -107,7 +108,7 @@ socket.on("update", data => {
                 // console.log('removed %s', gamestate.bullets[id]);
                 stage.removeChild(gamestate.bullets[id]);
                 delete gamestate.bullets[id];
-            }wfwrf
+            }
         }
     }
     for (let id in data.gamestate.bullets) {
@@ -183,26 +184,6 @@ function createBoundaryBox() {
 	return rect;
 }
 
-function createRandomTrees(n) {
-	const trees = [];
-	for (let i = 0; i < n; i++) {
-		const circle = new PIXI.Graphics();
-		const OUTLINE_WIDTH = 20;
-		const RADIUS = (Math.random() + 0.5) * TILE_SIZE;
-		circle.lineStyle(OUTLINE_WIDTH, 0x17B530, 1);
-		circle.beginFill(0x21D53D);
-		circle.drawCircle(0, 0, RADIUS);
-		circle.endFill();
-		circle.tileX = levelMaxTileX * Math.random();
-		circle.tileY = levelMaxTileY * Math.random();
-		circle.radius = RADIUS;
-
-		stage.addChild(circle);
-		trees.push(circle);
-	}
-	return trees;
-}
-
 function setGamestateTreesToTerrain(terrain) {
 	for (let tree of gamestate.trees) {
 		stage.removeChild(tree);
@@ -224,13 +205,38 @@ function setGamestateTreesToTerrain(terrain) {
 		gamestate.trees.push(circle);
     }
 }
+function setGamestateRocksToTerrain(terrain) {
+	for (let rock of gamestate.rocks) {
+		stage.removeChild(rock);
+	}
+	gamestate.rocks = [];
+	for (let rock of terrain.rocks) {
+        const circle = new PIXI.Graphics();
+		const OUTLINE_WIDTH = 20;
+		const RADIUS = (rock.h) * TILE_SIZE;
+		circle.lineStyle(OUTLINE_WIDTH, 0x542007, 1);
+		circle.beginFill(0x945112);
+		circle.drawCircle(0, 0, RADIUS);
+		circle.endFill();
+		circle.tileX = rock.x;
+		circle.tileY = rock.y;
+		circle.radius = RADIUS;
+
+		stage.addChild(circle);
+		gamestate.rocks.push(circle);
+    }
+}
 
 socket.on('terrain', function(data) {
     for (let tree of gamestate.trees) {
         stage.removeChild(tree);
     }
+	for (let rock of gamestate.rocks) {
+        stage.removeChild(rock);
+    }
 	terrainByLevels = data;
-    setGamestateTreesToTerrain(data[userLevel]);
+    setGamestateRocksToTerrain(data[userLevel]);
+	setGamestateTreesToTerrain(data[userLevel]);
 });
 
 function makePortal() {
@@ -286,6 +292,7 @@ controls.q.press = () => {
 				return;
 			} else {
 				ELEMENTS.dimension.innerHTML = userLevel + 1;
+				setGamestateRocksToTerrain(terrainByLevels[userLevel]);
 				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
 				return;
 			}
@@ -301,6 +308,7 @@ controls.e.press = () => {
 				return;
 			} else {
 				ELEMENTS.dimension.innerHTML = userLevel + 1;
+				setGamestateRocksToTerrain(terrainByLevels[userLevel]);
 				setGamestateTreesToTerrain(terrainByLevels[userLevel]);
 				return;
 			}
@@ -319,7 +327,7 @@ function isOutOfBounds(x, y) {
 
 function fixPos(pos, vector, userRadius, originalPos) {
     let bestPos = {x : pos.x, y: pos.y};
-	for (let tree of gamestate.trees) {
+	for (let tree of gamestate.rocks) {
 		const distance = Math.hypot(pos.x - tree.tileX, pos.y - tree.tileY);
 		if (distance < userRadius + tree.radius - 0.001) {
             let intersections = intersectionCircleAndLine(userRadius + tree.radius,
@@ -423,13 +431,24 @@ function gameLoop(delta) {
 		portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
 	}
 	for (let tree of gamestate.trees) {
+		let distance = Math.hypot(userTileX - tree.tileX, userTileY - tree.tileY) / (TILE_SIZE / 2 + tree.radius);
+		if (distance < 1) {
+			tree.alpha = 0.7 * distance + 0.15;
+		} else {
+			tree.alpha = 0.85;
+		}
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;
 		tree.y = (tree.tileY - userTileY) + app.renderer.height / 2;
+	}
+	for (let rock of gamestate.rocks) {
+		rock.x = (rock.tileX - userTileX) + app.renderer.width / 2;
+		rock.y = (rock.tileY - userTileY) + app.renderer.height / 2;
 	}
 
 	for (let i = 0; i < otherPlayers.data.length; i++) {
 		if (otherPlayers.data[i].name === NAME) {
             myHealth = otherPlayers.data[i].health;
+			ELEMENTS.health.setAttribute("value", myHealth);
 			app.stage.removeChild(otherPlayers.sprites[i]);
 		} else {
 			otherPlayers.data[i].x += otherPlayers.data[i].dx;
