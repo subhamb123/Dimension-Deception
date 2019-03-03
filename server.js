@@ -40,7 +40,6 @@ io.on("connection", function(socket) {
 	users[socket.id] = socket;
 	console.log("Connect! Num users: " + Object.keys(users).length);
 	socket.emit('terrain', terrain);
-	console.log(terrain);
 
 	socket.on("disconnect", function() {
 		delete users[socket.id];

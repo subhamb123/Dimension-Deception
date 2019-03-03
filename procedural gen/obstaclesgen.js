@@ -23,7 +23,6 @@ module.exports = {
 
         let res = [];
         for (let x = 0; x < width; x++) {
-            console.log("%d %d", x, res.length);
             for (let y = 0; y < height; y++) {
                 let p = perlin.perlin(x * freq, y * freq, grad)
                 if (p > threshold) {
