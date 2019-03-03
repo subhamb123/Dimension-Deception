@@ -6,6 +6,8 @@ const server = require("http").createServer(app);
 var io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
 
+const BOARD_SIZE = 1000;
+
 server.listen(port, () => {
 	console.log("Server listening at port " + port);
 });
@@ -27,7 +29,7 @@ const GENERATOR = require('./procedural gen/obstaclesgen');
 	//let rocks = GENERATOR.generate(10000, 10000, 0.1, 0.5);
 	//obstacles.rocks = rocks;
 
-	let trees = GENERATOR.generateWithHeight(1000, 1000, 0.01, 5);
+	let trees = GENERATOR.generateWithHeight(BOARD_SIZE, BOARD_SIZE, 0.01, 5);
 	for (let tree of trees) {
 		tree.h = Math.random() + 0.5;
 	}
@@ -64,6 +66,7 @@ function mainLoop(timeUsed = 0) {
 
 	// Game logic, check if bullet intersects
 	PHYSICS.bulletsHit(gamestate);
+	//check if bullets removeable
 
 	// send to every client
 	io.emit("update", {
