@@ -39,6 +39,7 @@ let userLevel = 0;
 let userTileX = Math.random() * levelMaxTileX;
 let userTileY = Math.random() * levelMaxTileY;
 let myHealth = 100;
+let isDead = false;
 let portalCooldown = Date.now();
 
 let userSpeed = 10;
@@ -348,8 +349,8 @@ controls.space.press = () => {
 
 function updateDimension() {
     ELEMENTS.dimension.innerHTML = userLevel + 1;
+    setGamestateRocksToTerrain(terrainByLevels[userLevel]);
     setGamestateTreesToTerrain(terrainByLevels[userLevel]);
-
 }
 
 function setup() {
@@ -486,6 +487,10 @@ function gameLoop(delta) {
 		if (otherPlayers.data[i].name === NAME) {
             myHealth = otherPlayers.data[i].health;
 			ELEMENTS.health.setAttribute("value", myHealth);
+			if (myHealth === 0 && !isDead) {
+				isDead = true;
+				alert("You are dead");
+			}
 			app.stage.removeChild(otherPlayers.sprites[i]);
 		} else {
 			otherPlayers.data[i].x += otherPlayers.data[i].dx;
