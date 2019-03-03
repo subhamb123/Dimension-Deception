@@ -15,7 +15,6 @@ module.exports = {
         let perp = this.perpendicularLine(line);
         if (this.distancePointAndLine(point, perp) < Math.hypot(line.dx, line.dy)/2 &&
             this.distancePointAndLine(point, line) < circleRad) {
-            console.log('first');
             return true;
         } else if (Math.hypot(point.x - line.x, point.y - line.y) < circleRad ||
                     Math.hypot(line.x + line.dx - point.x, line.y + line.dy - point.y) < circleRad) {
