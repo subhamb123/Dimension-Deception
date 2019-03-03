@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: {}, items: [], portals: [], ticks: 0};
+let gamestate = {players: {}, bullets: {}, items: [], portals: {}, ticks: 0};
 const PHYSICS = require('./physics');
 // let terrain = {};
 let terrainByLevels = [{}, {}, {}, {}, {}];
@@ -67,7 +67,8 @@ io.on("connection", function(socket) {
 		gamestate.bullets[bullet.id] = bullet;
 	});
 	socket.on('playerportal', function(portal) {
-		gamestate.portals.push(portal);
+		console.log(socket.id);
+		gamestate.portals[socket.id] = portal;
 	});
 
 });
