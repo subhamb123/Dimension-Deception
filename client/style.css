@@ -3,21 +3,38 @@
 	padding: 0;
 }
 
-html, body {
-	width: 100%;
-	height: 100%;
+body {
+	background: #282C34;
 }
 
-header, #data {
+header, #info, #data {
 	position: fixed;
 	bottom: 0;
 	right: 0;
 	padding: 0 20px;
+	height: fit-content;
 	background: #282C34;
 	color: #eee;
 	z-index: 10;
-	font-size: 40px;
+	font-size: 30px;
 	font-family: monospace;
+	user-select: none;
+    -webkit-user-select: none;
+	pointer-events: none;
+}
+
+#info {
+	width: fit-content;
+	height: fit-content;
+	top: 0;
+	left: 0;
+	padding: 20px;
+	background: none;
+	font-size: 20px;
+	font-family: "Open Sans", sans-serif;
+}
+#info td {
+	width: 130px;
 }
 
 header {
@@ -33,5 +50,25 @@ header h1 {
 	text-transform: uppercase;
 	font-weight: 400;
 	font-size: 30px;
-	color: #3f67b4;
+	color: #dd2e23;
+}
+
+#info strong {
+	color: #dd2e23;
+}
+
+progress {
+	-webkit-appearance: none;
+	width: 150px;
+}
+
+::-webkit-progress-bar {
+	background-color: #191e26;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+	border-radius: 2px;
+}
+::-webkit-progress-value {
+	background: #dd2e23;
+    border-radius: 2px;
+    background-size: 35px 20px, 100% 100%, 100% 100%;
 }
