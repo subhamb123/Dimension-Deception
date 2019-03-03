@@ -20,9 +20,10 @@ module.exports = {
             }
             if (playerHit != null) {
                 //Bullet hit player
+                console.log('hit');
                 playerHit.health -= bullet.damage;
                 if (playerHit.health < 0) {playerHit.health = 0;}
-                delete gamestate.bullets[i];
+                gamestate.bullets.splice(i, 1);
                 i--;
             } else {
                 bullet.x += bullet.vx;

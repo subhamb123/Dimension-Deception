@@ -67,7 +67,7 @@ const verticalLines = [];
 drawLines();
 const boundaryBox = createBoundaryBox();
 
-let gameState = {
+let gamestate = {
 	players: [],
 	portals: [],
 	bullets: [],
@@ -97,7 +97,14 @@ socket.on("update", data => {
 	otherPlayers.data = Object.values(data.gamestate.players);
 	while (otherPlayers.data.length > otherPlayers.sprites.length) {
 		addPlayerSprite();
-	}
+    }
+    for (let bullet of gamestate.bullets) {
+        app.removeChild(bullet);
+    }
+    gamestate.bullets = [];
+    for (let bullet of data.gamestate.bullets) {
+        makeBullet(bullet);
+    }
 });
 
 makePortal();
@@ -110,13 +117,13 @@ app.renderer.plugins.interaction.on("mousedown", event => {
 
 	const hypotenuse = Math.hypot(point.x - app.renderer.width / 2, point.y - app.renderer.height / 2);
 
-	const bullet = {
+	let bullet = {
 		x: userTileX,
 		y: userTileY,
 		vx: (point.x - app.renderer.width / 2) / hypotenuse * BULLET_SPEED,
-		vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED
+        vy: (point.y - app.renderer.height / 2) / hypotenuse * BULLET_SPEED
 	};
-	makeBullet(bullet);
+    makeBullet(bullet);
 	socket.emit("playershoot", bullet);
 });
 
@@ -134,7 +141,7 @@ function makeBullet(bullet) {
 	circle.vy = bullet.vy;
 
 	stage.addChild(circle);
-	gameState.bullets.push(circle);
+	gamestate.bullets.push(circle);
 }
 
 function createUserSprite() {
@@ -179,7 +186,9 @@ function createRandomTrees(n) {
 	return trees;
 }
 socket.on('terrain', function(data) {
-    console.log(data);
+    for (let tree of gamestate.trees) {
+        stage.removeChild(tree);
+    }
     for (let tree of data.trees) {
         const circle = new PIXI.Graphics();
 		const OUTLINE_WIDTH = 20;
@@ -193,7 +202,7 @@ socket.on('terrain', function(data) {
 		circle.radius = RADIUS;
 
 		stage.addChild(circle);
-		gameState.trees.push(circle);
+		gamestate.trees.push(circle);
     }
 });
 
@@ -210,7 +219,7 @@ function makePortal() {
 	circle.radius = RADIUS;
 
 	stage.addChild(circle);
-	gameState.portals.push(circle);
+	gamestate.portals.push(circle);
 }
 
 // draws a grid of horizontal and vertical lines
@@ -247,7 +256,7 @@ function isOutOfBounds(x, y) {
 
 function fixPos(pos, vector, userRadius, originalPos) {
     let bestPos = {x : pos.x, y: pos.y};
-	for (let tree of gameState.trees) {
+	for (let tree of gamestate.trees) {
 		const distance = Math.hypot(pos.x - tree.tileX, pos.y - tree.tileY);
 		if (distance < userRadius + tree.radius - 0.001) {
             let intersections = intersectionCircleAndLine(userRadius + tree.radius, 
@@ -278,12 +287,9 @@ function fixPos(pos, vector, userRadius, originalPos) {
                             tangent.dy *= -1;
                         }
                         limitMag(tangent, userSpeed);
-                        console.log(newPos);
                         newPos.x += tangent.dx;
                         newPos.y += tangent.dy;
-                        console.log(tangent);
                         fixPos(newPos, tangent, userRadius, originalPos)
-                        console.log('"fixing position"');
                     }
                 }
                 bestPos = newPos;
@@ -333,12 +339,12 @@ function gameLoop(delta) {
 	boundaryBox.x = app.renderer.width / 2 - userTileX;
 	boundaryBox.y = app.renderer.height / 2 - userTileY;
 
-	for (let i = gameState.bullets.length - 1; i >= 0; i--) {
-		const bullet = gameState.bullets[i];
+	for (let i = gamestate.bullets.length - 1; i >= 0; i--) {
+		const bullet = gamestate.bullets[i];
 		bullet.tileX += bullet.vx / delta;
 		bullet.tileY += bullet.vy / delta;
 		if (isOutOfBounds(bullet.tileX, bullet.tileY)) {
-			gameState.bullets.splice(i, 1);
+			gamestate.bullets.splice(i, 1);
 			app.stage.removeChild(bullet);
 		} else {
 			bullet.x = (bullet.tileX - userTileX) + app.renderer.width / 2;
@@ -346,15 +352,15 @@ function gameLoop(delta) {
 		}
 	}
 
-	for (let portal of gameState.portals) {
+	for (let portal of gamestate.portals) {
 		portal.x = (portal.tileX - userTileX) + app.renderer.width / 2;
 		portal.y = (portal.tileY - userTileY) + app.renderer.height / 2;
 	}
-	for (let tree of gameState.trees) {
+	for (let tree of gamestate.trees) {
 		tree.x = (tree.tileX - userTileX) + app.renderer.width / 2;
 		tree.y = (tree.tileY - userTileY) + app.renderer.height / 2;
 	}
-	for (let rock of gameState.rocks) {
+	for (let rock of gamestate.rocks) {
 		rock.x = (rock.tileX - userTileX) + app.renderer.width / 2;
 		rock.y = (rock.tileY - userTileY) + app.renderer.height / 2;
 	}

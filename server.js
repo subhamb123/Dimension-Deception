@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, "client")));
 let users = {};
 
 const GAMESTATE = require('./gamestate.js');
-let gamestate = {players: {}, bullets: [], items: [], ticks: 0};
+let gamestate = {players: {}, bullets: {}, items: [], ticks: 0};
 const PHYSICS = require('./physics');
 let terrain = {};
 
@@ -39,7 +39,7 @@ const GENERATOR = require('./procedural gen/obstaclesgen');
 io.on("connection", function(socket) {
 	users[socket.id] = socket;
 	console.log("Connect! Num users: " + Object.keys(users).length);
-	socket.emit('terrain', terrain);
+	socket.emit('terrain', terrain); 
 
 	socket.on("disconnect", function() {
 		delete users[socket.id];
@@ -57,7 +57,7 @@ io.on("connection", function(socket) {
 	});
 	socket.on("playershoot", function(bullet) {
 		bullet.damage = 5;
-		gamestate.bullets.push(bullet);
+		gamestate.bullets[bullet.id] = bullet;
 	})
 
 });
@@ -69,6 +69,7 @@ function mainLoop(timeUsed = 0) {
 	// Game logic, check if bullet intersects
 	PHYSICS.bulletsHit(gamestate);
 	//check if bullets removeable
+	GAMESTATE.removeBullets(gamestate.bullets, BOARD_SIZE);
 
 	// send to every client
 	io.emit("update", {
