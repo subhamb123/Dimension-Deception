@@ -1,5 +1,7 @@
 # Dimension Deception
 
+I was part of a codeday team that worked on this project.
+
 ![](https://img.shields.io/github/contributors/Twangybeast/Dimension-Deception.svg) ![](https://img.shields.io/github/license/Twangybeast/Dimension-Deception.svg)
 
 From CodeDay Winter 2019
